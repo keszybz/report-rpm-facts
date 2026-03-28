@@ -1,0 +1,16 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+[Unit]
+Description=Report Installed Systemd Packages
+
+[Service]
+DynamicUser=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=disconnected
+PrivateNetwork=yes
+PrivateIPC=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+
+ExecStart=@LIBEXECDIR@/report-package-facts

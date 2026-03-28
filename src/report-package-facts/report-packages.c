@@ -10,7 +10,7 @@
 #include "common.h"
 #include "report-packages.h"
 
-#define FACT_PREFIX "org.systemd.Packages"
+#define FACT_PREFIX "io.systemd.Packages"
 
 static int packages_generate(FactFamilyContext *context, _unused_ void *userdata) {
         int r;

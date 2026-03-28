@@ -1,0 +1,14 @@
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+[Unit]
+Description=Report Installed Systemd Packages
+
+[Socket]
+ListenStream=/run/systemd/report/io.systemd.Packages
+FileDescriptorName=varlink
+SocketMode=0666
+Accept=yes
+RemoveOnStop=yes
+
+[Install]
+WantedBy=sockets.target

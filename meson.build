@@ -9,15 +9,20 @@ project('report-package-facts', 'c',
         ],
 )
 
+systemd = dependency('systemd')
 librpm = dependency('rpm')
 libsystemd = dependency('libsystemd')
 
 includes = include_directories('src/shared')
 
+libexecdir = get_option('prefix') / get_option('libexecdir')
+systemdunitdir = systemd.get_variable('systemd_system_unit_dir')
+
 conf = configuration_data()
 conf.set_quoted('PROJECT_VERSION', meson.project_version())
 conf.set('_GNU_SOURCE', 1)
 conf.set('__SANE_USERSPACE_TYPES__', true)
+conf.set('LIBEXECDIR', libexecdir)
 
 config_h = configure_file(
         output : 'config.h',
@@ -40,4 +45,8 @@ executable(
                 librpm,
                 libsystemd,
         ],
+        install : true,
+        install_dir : libexecdir,
 )
+
+subdir('units')
