@@ -12,6 +12,14 @@
 
 #define FACT_PREFIX "io.systemd.Packages"
 
+static const char* map_vendor(const char *v) {
+        if (!v)
+                return NULL;
+        if (streq(v, "Fedora Project"))
+                return "fedora";
+        return NULL;
+}
+
 static int packages_generate(FactFamilyContext *context, _unused_ void *userdata) {
         int r;
 
@@ -26,30 +34,50 @@ static int packages_generate(FactFamilyContext *context, _unused_ void *userdata
 
         Header h;
         while ((h = rpmdbNextIterator(mi)) != NULL) {
-                rpmtd td = rpmtdNew(), td2 = rpmtdNew();
+                rpmtd td = rpmtdNew(), td2 = rpmtdNew(), td3 = rpmtdNew(), td4 = rpmtdNew(), td5 = rpmtdNew(), td6 = rpmtdNew();
 
                 if (!headerGet(h, RPMTAG_NAME, td, 0))
                         return -EIO;
 
-                if (!headerGet(h, RPMTAG_NEVRA, td2, HEADERGET_EXT))
+                if (!headerGet(h, RPMTAG_VERSION, td2, 0))
+                        return -EIO;
+
+                if (!headerGet(h, RPMTAG_RELEASE, td3, 0))
                         return -EIO;
 
                 const char *name = rpmtdGetString(td);
-                const char *nevra = rpmtdGetString(td2);
+                const char *version = rpmtdGetString(td2);
+                const char *release = rpmtdGetString(td3);
 
-                assert(nevra);
-                assert(nevra[0]);
-                
-                /* nevra should have the format <name>-[<epoch>:]<version>-<release>… */
-                assert(nevra[strlen(name)] == '-');
-                const char *evra = nevra + strlen(name) + 1;
+                const char *vendor = NULL;
+                if (headerGet(h, RPMTAG_VENDOR, td4, HEADERGET_EXT))
+                        vendor = map_vendor(rpmtdGetString(td4));
 
-                _cleanup_free_ char *purl = strjoin("pkg:rpm//", name, "@", evra);
+                const char *arch = NULL;
+                if (headerGet(h, RPMTAG_ARCH, td5, 0))
+                        arch = rpmtdGetString(td5);
+
+                uint64_t epoch = 0;
+                char epochstr[sizeof("18446744073709551616")] = "";
+                if (headerGet(h, RPMTAG_EPOCH, td6, HEADERGET_EXT))
+                        epoch = rpmtdGetNumber(td6);
+                if (epoch > 0)
+                        snprintf(epochstr, sizeof(epochstr), "%lu", epoch);
+
+                _cleanup_free_ char *purl = strjoin(
+                                "pkg:rpm/", vendor,
+                                "/", name, "@", version, "-", release,
+                                arch ? "?arch=" : "", arch,
+                                epoch > 0 ? "?epoch=" : "", epochstr);
                 if (!purl)
                         return -ENOMEM;
 
                 rpmtdFree(td);
                 rpmtdFree(td2);
+                rpmtdFree(td3);
+                rpmtdFree(td4);
+                rpmtdFree(td5);
+                rpmtdFree(td6);
 
                 r = fact_build_send_string(context, /* object= */ NULL, purl);
                 if (r < 0)

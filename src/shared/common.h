@@ -21,6 +21,8 @@ static inline void freep(void *p) {
         *(void**)p = mfree(*(void**) p);
 }
 
+#define streq(a,b) (strcmp((a),(b)) == 0)
+
 #define _cleanup_free_ _cleanup_(freep)
 
 #define TAKE_GENERIC(var, type, nullvalue)                       \
