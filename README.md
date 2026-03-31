@@ -13,3 +13,9 @@ The service is written in C and uses sd-varlink.
 ## To test
 
 `varlinkctl call --more ./build/report-package-facts io.systemd.Facts.List {}`
+
+
+## License
+
+This program is licensed under the terms of the GNU Lesser General Public License,
+Version 2.1 or later.
