@@ -10,7 +10,7 @@
 #include "common.h"
 #include "report-packages.h"
 
-#define FACT_PREFIX "io.systemd.Packages"
+#define METRIC_PREFIX "io.systemd.Packages"
 
 static const char* map_vendor(const char *v) {
         if (!v)
@@ -20,7 +20,7 @@ static const char* map_vendor(const char *v) {
         return NULL;
 }
 
-static int packages_generate(FactFamilyContext *context, _unused_ void *userdata) {
+static int packages_generate(MetricFamilyContext *context, _unused_ void *userdata) {
         int r;
 
         assert(context);
@@ -79,7 +79,7 @@ static int packages_generate(FactFamilyContext *context, _unused_ void *userdata
                 rpmtdFree(td5);
                 rpmtdFree(td6);
 
-                r = fact_build_send_string(context, /* object= */ NULL, purl);
+                r = metric_build_send_string(context, /* object= */ NULL, purl, /* fields= */ NULL);
                 if (r < 0)
                         return r;
         }
@@ -89,20 +89,21 @@ static int packages_generate(FactFamilyContext *context, _unused_ void *userdata
         return 0;
 }
 
-static const FactFamily fact_family_table[] = {
-        /* Keep facts ordered alphabetically */
+static const MetricFamily metric_family_table[] = {
+        /* Keep metrics ordered alphabetically */
         {
-                .name = FACT_PREFIX ".Package",
+                .name = METRIC_PREFIX ".Package",
                 .description = "Installed system package (as purl)",
+                .type = METRIC_FAMILY_TYPE_STRING,
                 .generate = packages_generate,
         },
         {}
 };
 
 int vl_method_list_packages(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
-        return facts_method_list(fact_family_table, link, parameters, flags, userdata);
+        return metrics_method_list(metric_family_table, link, parameters, flags, userdata);
 }
 
 int vl_method_describe_packages(sd_varlink *link, sd_json_variant *parameters, sd_varlink_method_flags_t flags, void *userdata) {
-        return facts_method_describe(fact_family_table, link, parameters, flags, userdata);
+        return metrics_method_describe(metric_family_table, link, parameters, flags, userdata);
 }

@@ -6,7 +6,7 @@
 #include <systemd/sd-varlink-idl.h>
 
 #include "common.h"
-#include "facts.h"
+#include "metrics.h"
 #include "report-packages.h"
 
 static int vl_server(void) {
@@ -22,8 +22,10 @@ static int vl_server(void) {
                                        "report-package-facts",
                                        PROJECT_VERSION,
                                        NULL);
+        if (r < 0)
+                return log_error_errno(r, "Failed to describe varlink server object: %m");
 
-        r = facts_add_to_varlink_server(s, vl_method_list_packages, vl_method_describe_packages);
+        r = metrics_add_to_varlink_server(s, vl_method_list_packages, vl_method_describe_packages);
         if (r < 0)
                 return r;
 
